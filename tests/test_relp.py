@@ -54,7 +54,7 @@ class TestRelpParser(TestCase):
     def test_offers(self):
         self.assertEqual(parse_offers(b'''relp_version=0
 relp_software=librelp,1.2.12,http://librelp.adiscon.com
-commands=syslog'''), [
+commands=syslog\n'''), [
             (b'relp_version', b'0'),
             (b'relp_software', b'librelp,1.2.12,http://librelp.adiscon.com'),
             (b'commands', b'syslog'),
@@ -71,12 +71,31 @@ class TestRelpSerializer(TestCase):
             b'1 foo 0\n')
 
     def test_offers(self):
-        self.assertEqual(serialize_offers([
+        self.assertEqual(serialize_offers(0, [
             (b'relp_version', b'0'),
             (b'relp_software', b'librelp,1.2.12,http://librelp.adiscon.com'),
             (b'commands', b'syslog'),
             ]),
-            b'''
-relp_version=0
+            b'''relp_version=0
 relp_software=librelp,1.2.12,http://librelp.adiscon.com
 commands=syslog''')
+
+class TestSession(TestCase):
+    def test_session(self):
+        s = RelpSession()
+        self.assertFalse(s.closed)
+        s.on_client_data(LIBRELP_OPEN_FRAME)
+        self.assertFalse(s.closed)
+        self.assertEqual(b''.join(s.out_buffer), b'''1 rsp 55 relp_version=0
+relp_software=journalmon
+commands=syslog\n''')
+        self.assertEqual(s.messages, [])
+
+        s.out_buffer = []
+
+        s.on_client_data(b'''2 syslog 6 foobar\n''')
+        self.assertEqual(s.out_buffer, [])
+        self.assertEqual(s.messages, [(2, b'foobar')])
+
+        s.ack_msg(2)
+        self.assertEqual(b''.join(s.out_buffer), b'''2 rsp 6 200 OK\n''')
