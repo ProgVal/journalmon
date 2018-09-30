@@ -5,6 +5,8 @@ __all__ = ['RelpParseError', 'RawRelpFrame', 'RelpFrameStreamingParser']
 from typing import List
 from typing import NamedTuple
 
+MAX_DATALEN = 128000
+
 class RelpParseError(Exception):
     pass
 
@@ -42,6 +44,8 @@ class RelpFrameStreamingParser:
             self._current_cmd = parts[1]
             subparts = parts[2].split(b'\n', 1)
             self._current_datalen = int(subparts[0])
+            if self._current_datalen > MAX_DATALEN:
+                raise RelpParseError('datalen is too large.')
             if len(subparts) == 1:
                 self._buffer = subparts[1]
             else:
@@ -50,6 +54,8 @@ class RelpFrameStreamingParser:
             self._current_txid = parts[0]
             self._current_cmd = parts[1]
             self._current_datalen = int(parts[2])
+            if self._current_datalen > MAX_DATALEN:
+                raise RelpParseError('datalen is too large.')
             self._buffer = parts[3]
 
     def on_client_data(self, data: bytes) -> List[RawRelpFrame]:
