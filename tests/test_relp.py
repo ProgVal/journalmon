@@ -5,7 +5,8 @@ from journalmon.collection_gateway.relp import *
 
 LIBRELP_OPEN_FRAME = b'''1 open 86 relp_version=0
 relp_software=librelp,1.2.12,http://librelp.adiscon.com
-commands=syslog'''
+commands=syslog
+'''
 LIBRELP_OPEN_FRAME_PARSED = RawRelpFrame(
         txid=1, cmd='open',
         data=b'relp_version=0\nrelp_software=librelp,1.2.12,http://librelp.adiscon.com\ncommands=syslog'
@@ -50,7 +51,7 @@ class TestRelpParser(TestCase):
         with self.assertRaises(RelpParseError):
             self.assertEqual(p.on_client_data(b'1 open 1000000\n'), [])
 
-    def test_parse_offers(self):
+    def test_offers(self):
         self.assertEqual(parse_offers(b'''relp_version=0
 relp_software=librelp,1.2.12,http://librelp.adiscon.com
 commands=syslog'''), [
@@ -58,3 +59,24 @@ commands=syslog'''), [
             (b'relp_software', b'librelp,1.2.12,http://librelp.adiscon.com'),
             (b'commands', b'syslog'),
             ])
+
+class TestRelpSerializer(TestCase):
+    def test_frame(self):
+        self.assertEqual(LIBRELP_OPEN_FRAME_PARSED.serialize(), LIBRELP_OPEN_FRAME)
+
+    def test_empty_frame(self):
+        p = RelpFrameStreamingParser()
+
+        self.assertEqual(RawRelpFrame(txid=1, cmd='foo', data=b'').serialize(),
+            b'1 foo 0\n')
+
+    def test_offers(self):
+        self.assertEqual(serialize_offers([
+            (b'relp_version', b'0'),
+            (b'relp_software', b'librelp,1.2.12,http://librelp.adiscon.com'),
+            (b'commands', b'syslog'),
+            ]),
+            b'''
+relp_version=0
+relp_software=librelp,1.2.12,http://librelp.adiscon.com
+commands=syslog''')

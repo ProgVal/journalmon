@@ -1,19 +1,28 @@
 """Gateway listening for RELP messages."""
 
-__all__ = ['RelpParseError', 'RawRelpFrame', 'RelpFrameStreamingParser', 'parse_offers']
+__all__ = ['RelpParseError', 'RawRelpFrame', 'RelpFrameStreamingParser',
+        'parse_offers', 'serialize_offers']
 
-from typing import List, Tuple, NamedTuple
+from typing import List, Tuple, NamedTuple, Optional
 
 MAX_DATALEN = 128000
 
 class RelpParseError(Exception):
     pass
 
-RawRelpFrame = NamedTuple('RawRelpFrame', [
+_RawRelpFrame = NamedTuple('_RawRelpFrame', [
     ('txid', 'int'),
     ('cmd', 'str'),
     ('data', 'bytes')
     ])
+
+class RawRelpFrame(_RawRelpFrame):
+    def serialize(self) -> bytes:
+        if self.data:
+            s = '{} {} {} '.format(self.txid, self.cmd, len(self.data))
+            return s.encode('ascii') + self.data + b'\n'
+        else:
+            return '{} {} 0\n'.format(self.txid, self.cmd).encode('ascii')
 
 class RelpFrameStreamingParser:
     def __init__(self) -> None:
@@ -75,7 +84,7 @@ class RelpFrameStreamingParser:
         self._frames = []
         return frames
 
-def parse_offers(data: bytes) -> List[Tuple[bytes, bytes]]:
+def parse_offers(data: bytes) -> List[Tuple[bytes, Optional[bytes]]]:
     offers = [] # type: List[Tuple[bytes, bytes]]
     for line in data.split(b'\n'):
         if line == b'':
@@ -86,3 +95,9 @@ def parse_offers(data: bytes) -> List[Tuple[bytes, bytes]]:
         else:
             offers.append((parts[0], parts[1]))
     return offers
+
+def serialize_offers(offers: List[Tuple[bytes, Optional[bytes]]]) -> bytes:
+    return b'\n' + b'\n'.join(
+            offer[0] if offer[1] is None else b'='.join(offer)
+            for offer in offers
+            )
