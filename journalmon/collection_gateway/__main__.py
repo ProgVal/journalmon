@@ -3,6 +3,7 @@ import socket
 from typing import List, Tuple
 from socketserver import TCPServer, StreamRequestHandler, ThreadingMixIn
 
+from ..storage_backends.sqlite3_storage import Sqlite3Storage
 from .relp import RelpSession
 
 class RelpRequestHandler(StreamRequestHandler):
@@ -24,6 +25,7 @@ class RelpServer(TCPServer, ThreadingMixIn):
     pass
 
 def main(*, db_name: str, addr: Tuple[str, int]):
+    db = Sqlite3Storage(db_name)
     RelpServer(addr, RelpRequestHandler).serve_forever()
 
 if __name__ == '__main__':
