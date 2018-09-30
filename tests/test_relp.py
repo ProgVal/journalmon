@@ -86,7 +86,8 @@ class TestSession(TestCase):
         self.assertFalse(s.closed)
         s.on_client_data(LIBRELP_OPEN_FRAME)
         self.assertFalse(s.closed)
-        self.assertEqual(b''.join(s.out_buffer), b'''1 rsp 55 relp_version=0
+        self.assertEqual(b''.join(s.out_buffer), b'''1 rsp 62 200 OK
+relp_version=0
 relp_software=journalmon
 commands=syslog\n''')
         self.assertEqual(s.messages, [])

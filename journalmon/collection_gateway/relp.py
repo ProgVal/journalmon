@@ -174,11 +174,10 @@ class RelpSession:
                 (b'commands', b'syslog'),
                 ]
         data = serialize_offers(client_version, offers)
-        response = RawRelpFrame(txid=frame.txid, cmd='rsp', data=data)
+        response = RawRelpFrame(txid=frame.txid, cmd='rsp', data=b'200 OK\n'+data)
         self.out_buffer.append(response.serialize())
 
     def ack_msg(self, msg_id: int) -> None:
         """Acknowledge a message has been hanlded."""
         frame = RawRelpFrame(txid=msg_id, cmd='rsp', data=b'200 OK')
         self.out_buffer.append(frame.serialize())
-
