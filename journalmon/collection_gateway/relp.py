@@ -149,6 +149,7 @@ class RelpSession:
                     msg = frame.data # TODO: parse
                     self.messages.append((frame.txid, msg))
                 elif frame.cmd == 'close':
+                    self._state = SessionState.CLOSED
                     frame = RawRelpFrame(txid=frame.txid, cmd='rsp', data=None)
                     self.out_buffer.append(frame.serialize())
                 else:
