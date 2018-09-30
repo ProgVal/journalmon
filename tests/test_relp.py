@@ -11,6 +11,7 @@ LIBRELP_OPEN_FRAME_PARSED = RawRelpFrame(
         data=b'relp_version=0\nrelp_software=librelp,1.2.12,http://librelp.adiscon.com\ncommands=syslog'
         )
 
+
 class TestRelpParser(TestCase):
     def test_frame(self):
         p = RelpFrameStreamingParser()
@@ -48,3 +49,12 @@ class TestRelpParser(TestCase):
 
         with self.assertRaises(RelpParseError):
             self.assertEqual(p.on_client_data(b'1 open 1000000\n'), [])
+
+    def test_parse_offers(self):
+        self.assertEqual(parse_offers(b'''relp_version=0
+relp_software=librelp,1.2.12,http://librelp.adiscon.com
+commands=syslog'''), [
+            (b'relp_version', b'0'),
+            (b'relp_software', b'librelp,1.2.12,http://librelp.adiscon.com'),
+            (b'commands', b'syslog'),
+            ])

@@ -1,9 +1,8 @@
 """Gateway listening for RELP messages."""
 
-__all__ = ['RelpParseError', 'RawRelpFrame', 'RelpFrameStreamingParser']
+__all__ = ['RelpParseError', 'RawRelpFrame', 'RelpFrameStreamingParser', 'parse_offers']
 
-from typing import List
-from typing import NamedTuple
+from typing import List, Tuple, NamedTuple
 
 MAX_DATALEN = 128000
 
@@ -75,3 +74,15 @@ class RelpFrameStreamingParser:
         frames = self._frames
         self._frames = []
         return frames
+
+def parse_offers(data: bytes) -> List[Tuple[bytes, bytes]]:
+    offers = [] # type: List[Tuple[bytes, bytes]]
+    for line in data.split(b'\n'):
+        if line == b'':
+            pass # TODO: error?
+        parts = line.split(b'=', 1)
+        if len(parts) == 1:
+            offers.append((parts[0], None))
+        else:
+            offers.append((parts[0], parts[1]))
+    return offers
